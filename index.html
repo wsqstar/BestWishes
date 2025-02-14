@@ -17,28 +17,76 @@
       min-height: 100vh;
       background: #1a1a1a;
       display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
-      /* 新增，确保垂直居中 */
+      /* 主轴居中 */
+      align-items: center;
+      /* 交叉轴居中 */
+      margin: 0;
       overflow: hidden;
-      position: relative;
     }
 
-    /* 红心容器 */
     .heart-container {
       position: relative;
-      /* 修改为 relative */
-      text-align: center;
-      /* 新增，确保文本居中 */
+      display: grid;
+      /* 改用网格布局 */
+      place-items: center;
+      /* 网格项双轴居中 */
     }
 
-    /* CSS绘制红心 */
+    /* 心形定位修正 */
     .heart {
       width: 100px;
       height: 90px;
-      position: relative;
       animation: heartbeat 1.2s infinite;
+      position: relative;
+      margin-left: -8px;
+      filter: drop-shadow(0 0 12px rgba(255, 56, 96, 0.8));
+      /* 新增光晕效果 */
+    }
+
+    /* 增强心跳动画 */
+    @keyframes heartbeat {
+      0% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 12px rgba(255, 56, 96, 0.8));
+      }
+
+      50% {
+        transform: scale(1.15);
+        filter: drop-shadow(0 0 25px rgba(255, 56, 96, 0.9));
+        /* 放大时增强光晕 */
+      }
+
+      100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 12px rgba(255, 56, 96, 0.8));
+      }
+    }
+
+    /* 心形伪元素添加微光效果 */
+    .heart::before,
+    .heart::after {
+      content: '';
+      position: absolute;
+      width: 50px;
+      height: 80px;
+      background: #ff3860;
+      border-radius: 50px 50px 0 0;
+      box-shadow: 0 0 8px rgba(255, 56, 96, 0.4);
+      /* 添加局部微光 */
+    }
+
+
+    /* 新增文字样式 */
+    .text-container {
+      position: absolute;
+      top: calc(50% + 20px);
+      /* 文字下移20px */
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-family: Arial;
+      text-align: center;
     }
 
     .heart::before,
@@ -138,16 +186,44 @@
       height: 6px;
       border-radius: 50%;
     }
+
+    /* 新增重置按钮样式 */
+    .reset-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 8px 16px;
+      background: #ff3860;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+      display: none;
+      /* 默认隐藏 */
+      z-index: 999;
+    }
+
+    .reset-btn:hover {
+      background: #ff1d4a;
+    }
+
+    /* 新增控制区域隐藏类 */
+    .controls.hidden {
+      display: none;
+    }
   </style>
 </head>
 
 <body>
+  <!-- 在body开始处添加重置按钮 -->
+  <button class="reset-btn" id="resetBtn">重置</button>
   <div class="heart-container">
     <div class="heart"></div>
     <div class="blessing-text" id="blessingText">Wish you happy everyday!</div>
   </div>
 
-  <div class="controls">
+  <div class="controls" id="controls"> <!-- 添加id属性 -->
     <input type="text" id="messageInput" placeholder="输入祝福语">
     <button id="generateBtn">生成</button>
   </div>
@@ -192,6 +268,67 @@
           setTimeout(() => particle.remove(), duration);
           return particle;
         }
+
+        static createContinuousParticle() {
+          const heart = document.querySelector('.heart');
+          const rect = heart.getBoundingClientRect();
+          const x = rect.left + rect.width / 2;
+          const y = rect.top + rect.height / 2;
+
+          const particle = document.createElement('div');
+          particle.className = 'firework-particle';
+
+          // 初始颜色（深红色）
+          const hueStart = 0;
+          const hueEnd = 15;
+          const hue = hueStart + Math.random() * (hueEnd - hueStart);
+          const saturation = 70 + Math.random() * 30;
+          let lightness = 40 + Math.random() * 10; // 初始较暗
+
+          particle.style.background = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+
+          // 运动参数
+          const angle = Math.random() * Math.PI * 2;
+          // const angle = (Math.PI / 2) + (Math.random() - 0.5) * Math.PI / 4; // 主要向下
+          const radius = 200 + Math.random() * 100;
+          const duration = 2000 + Math.random() * 1000;
+
+          particle.style.zIndex = -1; // 确保在心形后方
+          Object.assign(particle.style, {
+            left: `${x}px`,
+            top: `${y}px`,
+            transform: `translate(0, 0) scale(0.5)`,
+            opacity: 1
+          });
+
+          // 添加颜色和运动动画
+          requestAnimationFrame(() => {
+            particle.style.transition = `
+                    transform ${duration}ms linear,
+                    opacity ${duration}ms ease-out,
+                    background ${duration}ms linear
+                `;
+
+            // 最终颜色变化（变亮并带色相偏移）
+            particle.style.background = `hsl(
+                    ${hue + 10}, 
+                    ${saturation * 0.8}%, 
+                    ${lightness + 30}%
+                )`;
+
+            particle.style.transform = `
+                    translate(
+                        ${Math.cos(angle) * radius}px, 
+                        ${Math.sin(angle) * radius}px
+                    ) scale(1.5)
+                `;
+            particle.style.opacity = 0;
+          });
+
+          setTimeout(() => particle.remove(), duration);
+          return particle;
+        }
+
       }
 
       /* 祝福语管理模块 */
@@ -200,14 +337,25 @@
         constructor() {
           this.textElement = document.getElementById('blessingText');
           this.inputElement = document.getElementById('messageInput');
+          this.controls = document.getElementById('controls');
+          this.resetBtn = document.getElementById('resetBtn');
           this.initFromURL();
         }
 
         initFromURL() {
           const params = new URLSearchParams(location.search);
           if (params.has('message')) {
-            this.updateText(decodeURIComponent(params.get('message')));
+            const message = decodeURIComponent(params.get('message'));
+            this.updateText(message);
+            this.toggleUI(false); // 隐藏输入框
+          } else {
+            this.toggleUI(true); // 显示输入框
           }
+        }
+
+        toggleUI(showInput) {
+          this.controls.classList.toggle('hidden', !showInput);
+          this.resetBtn.style.display = showInput ? 'none' : 'block';
         }
 
         updateText(text) {
@@ -220,13 +368,35 @@
       const initEvents = () => {
         const blessingManager = new BlessingManager();
 
-        // 点击生成按钮
+        /* 初始化同步 */
+        document.addEventListener('DOMContentLoaded', () => {
+          // 设置初始标题
+          document.title = document.getElementById('blessingText').textContent;
+        });
+
+
+        // 生成按钮点击事件
         document.getElementById('generateBtn').addEventListener('click', () => {
           const message = document.getElementById('messageInput').value;
           blessingManager.updateText(message);
-          // 更新URL参数
           const newUrl = `${window.location.origin}${window.location.pathname}?message=${encodeURIComponent(message)}`;
           history.pushState({ path: newUrl }, '', newUrl);
+          blessingManager.toggleUI(false); // 隐藏输入框
+          blessingText.textContent = message;
+          document.title = message; // 同步到标题
+        });
+
+        // 重置按钮点击事件
+        document.getElementById('resetBtn').addEventListener('click', () => {
+          history.replaceState({}, document.title, window.location.pathname);
+          blessingManager.updateText('Wish you happy everyday!');
+          blessingManager.toggleUI(true); // 显示输入框
+          const defaultText = 'Wish you happy everyday!';
+          document.getElementById('blessingText').textContent = defaultText;
+          document.title = defaultText;
+          // 清空输入框
+          document.getElementById('messageInput').value = '';
+
         });
 
         // 屏幕点击/触摸事件
@@ -245,7 +415,25 @@
             document.body.appendChild(Firework.createParticle(x, y));
           }
         }
+
+        // 新增持续烟花效果
+        setInterval(() => {
+          for (let i = 0; i < 2; i++) { // 每次生成2个粒子
+            document.body.appendChild(Firework.createContinuousParticle());
+          }
+        }, 300); // 每300毫秒生成一次
       };
+
+
+      // 添加心形的z-index保证在前景
+      const style = document.createElement('style');
+      style.innerHTML = `
+        .heart, .text-container {
+            position: relative;
+            z-index: 2;
+        }
+    `;
+      document.head.appendChild(style);
 
       // 初始化执行
       initEvents();
