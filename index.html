@@ -3,7 +3,9 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
   <title>动态祝福卡片</title>
   <style>
     /* 基础重置 */
@@ -149,22 +151,34 @@
     .controls {
       position: fixed;
       bottom: 20px;
-      padding: 15px;
-      background: rgba(255, 255, 255, 0.9);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90vw;
+      max-width: 400px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.95);
       border-radius: 8px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       display: flex;
-      gap: 10px;
+      gap: 8px;
+      flex-wrap: nowrap;
+      /* 防止换行 */
     }
 
     #messageInput {
+      flex: 1;
+      min-width: 0;
+      /* 允许输入框收缩 */
       padding: 8px 12px;
       border: 2px solid #ff3860;
       border-radius: 5px;
-      width: 250px;
+      font-size: 16px;
+      /* 防止iOS自动缩放 */
     }
 
     #generateBtn {
+      flex-shrink: 0;
+      /* 防止按钮被压缩 */
       padding: 8px 16px;
       background: #ff3860;
       border: none;
@@ -172,6 +186,7 @@
       color: white;
       cursor: pointer;
       transition: background 0.3s;
+      white-space: nowrap;
     }
 
     #generateBtn:hover {
@@ -211,6 +226,22 @@
     /* 新增控制区域隐藏类 */
     .controls.hidden {
       display: none;
+    }
+
+    /* 添加媒体查询适配小屏幕 */
+    @media (max-width: 360px) {
+      .controls {
+        width: 95vw;
+        padding: 10px;
+      }
+
+      #messageInput {
+        padding: 6px 10px;
+      }
+
+      #generateBtn {
+        padding: 6px 12px;
+      }
     }
   </style>
   <script>
